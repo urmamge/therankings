@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #FFF3E0;
@@ -83,6 +83,25 @@
     .door-takeaway .facts { font-weight: 500; font-size: 1.15rem; text-align: right; max-width: 24ch; }
     .door-takeaway .facts strong { display: block; font-weight: 700; font-size: 1.9rem; line-height: 1.1; color: var(--butter); }
 
+    .door-badminton {
+      position: relative;
+      overflow: hidden;
+      background: #1E6B4B;
+      color: #FFFFFF;
+      border: 4px solid #13233A;
+      border-radius: 14px;
+      box-shadow: 7px 7px 0 var(--shadow);
+    }
+    .door-badminton:active { transform: translate(3px, 3px); box-shadow: 4px 4px 0 var(--shadow); }
+    .door-badminton svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: rgba(255, 255, 255, 0.28); stroke-width: 7; }
+    .door-badminton h2, .door-badminton .facts { position: relative; }
+    .door-badminton h2 {
+      margin: 0;
+      font: italic 800 clamp(2.8rem, 8.5vw, 5.6rem)/0.9 "Barlow Condensed", sans-serif;
+      text-shadow: 0.04em 0.04em 0 #13233A;
+    }
+    .door-badminton .facts { font-weight: 500; font-size: 1.15rem; text-align: right; max-width: 26ch; }
+
     .soon {
       border: 3px dashed var(--rule);
       border-radius: 28px;
@@ -95,7 +114,7 @@
     footer a { color: var(--fg); font-weight: 600; text-underline-offset: 3px; overflow-wrap: anywhere; }
 
     @media (max-width: 560px) {
-      .door-takeaway .facts { text-align: left; }
+      .door-takeaway .facts, .door-badminton .facts { text-align: left; }
     }
   </style>
 </head>
@@ -110,6 +129,13 @@
         <a class="door door-takeaway" href="/takeaway/">
           <h2>Takeaways</h2>
           <span class="facts" id="takeaway-facts">McDonald's, KFC and the rest</span>
+        </a>
+      </li>
+      <li>
+        <a class="door door-badminton" href="/badminton/">
+          <svg viewBox="0 0 1340 610" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect x="4" y="4" width="1332" height="602"/><path d="M0 46H1340M0 564H1340M76 0V610M1264 0V610M472 0V610M868 0V610M0 305H472M868 305H1340M670 0V610"/></svg>
+          <h2>Badminton</h2>
+          <span class="facts">Shuttles, racquets, strings, shoes and grips</span>
         </a>
       </li>
       <li class="soon">More rankings on the way.</li>

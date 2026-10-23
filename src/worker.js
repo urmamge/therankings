@@ -4,9 +4,25 @@
 // The owner's draft verification email. Gitignored, so it has to exist locally to build or deploy.
 import VERIFICATION_EMAIL from "../verification-email.txt";
 
-// Each ranking's rating categories. A new ranking needs an entry here and a folder in public/.
+// Each ranking's rating categories, the name of its second field (the takeaway's location, a
+// racquet's model) and any info tags with their allowed values. A new ranking needs an entry here
+// and a folder in public/.
 const RANKINGS = {
-  takeaway: ["food", "drive", "sitin", "app"],
+  takeaway: { categories: ["food", "drive", "sitin", "app"], name: "location", example: "McDonald's" },
+  "badminton-shuttles": {
+    categories: ["flight", "durability", "feel", "value"], name: "model", example: "Yonex",
+    tags: { type: ["Feather", "Nylon"] },
+  },
+  "badminton-racquets": {
+    categories: ["power", "control", "handling", "value"], name: "model", example: "Yonex",
+    tags: { weight: ["2U", "3U", "4U", "5U", "6U"], balance: ["Head-heavy", "Even", "Head-light"] },
+  },
+  "badminton-strings": {
+    categories: ["power", "control", "durability", "feel"], name: "model", example: "Yonex",
+    tags: { gauge: ["0.60mm", "0.61mm", "0.62mm", "0.63mm", "0.64mm", "0.65mm", "0.66mm", "0.67mm", "0.68mm", "0.69mm", "0.70mm", "0.71mm", "0.72mm"] },
+  },
+  "badminton-shoes": { categories: ["comfort", "grip", "support", "durability"], name: "model", example: "Yonex" },
+  "badminton-grips": { categories: ["tack", "comfort", "sweat", "durability"], name: "model", example: "Yonex" },
 };
 const WEIGHTS = [0.5, 1, 2, 3];
 
@@ -80,6 +96,7 @@ function rowToEntry(row) {
     ratings: JSON.parse(row.ratings),
     overall: row.overall,
     photos: JSON.parse(row.photos),
+    tags: JSON.parse(row.tags || "{}"),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     edits: row.edits ?? 0,
@@ -120,13 +137,14 @@ function overallOf(ratings) {
 
 function cleanEntry(body, ranking) {
   const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const config = RANKINGS[ranking];
   const brand = text(body.brand, 60);
   const location = text(body.location, 80);
-  if (!brand) throw new HttpError(400, "Add the brand, like McDonald's.");
-  if (!location) throw new HttpError(400, "Add the location, like Botanic Avenue.");
+  if (!brand) throw new HttpError(400, `Add the brand, like ${config.example}.`);
+  if (!location) throw new HttpError(400, `Add the ${config.name}.`);
 
   const ratings = {};
-  for (const cat of RANKINGS[ranking]) {
+  for (const cat of config.categories) {
     const r = body.ratings?.[cat];
     if (!r) continue;
     const score = Number(r.score);
@@ -141,7 +159,13 @@ function cleanEntry(body, ranking) {
     ? body.photos.filter((k) => typeof k === "string" && /^[a-z0-9-]+\.(jpg|webp|png)$/.test(k)).slice(0, 20)
     : [];
 
-  return { brand, location, description: text(body.description, 4000), ratings, overall: overallOf(ratings), photos };
+  // Tags are optional; anything not in the allowed list is dropped.
+  const tags = {};
+  for (const [key, allowed] of Object.entries(config.tags || {})) {
+    if (allowed.includes(body.tags?.[key])) tags[key] = body.tags[key];
+  }
+
+  return { brand, location, description: text(body.description, 4000), ratings, overall: overallOf(ratings), photos, tags };
 }
 
 function slugify(s) {
@@ -169,11 +193,12 @@ async function saveEntry(req, env, ranking, id) {
   const entry = { id, ...data, createdAt, updatedAt: now };
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO entries (id, ranking, brand, location, description, ratings, overall, photos, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO entries (id, ranking, brand, location, description, ratings, overall, photos, tags, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET brand = excluded.brand, location = excluded.location, description = excluded.description,
-         ratings = excluded.ratings, overall = excluded.overall, photos = excluded.photos, updated_at = excluded.updated_at`
-    ).bind(id, ranking, data.brand, data.location, data.description, JSON.stringify(data.ratings), data.overall, JSON.stringify(data.photos), createdAt, now),
+         ratings = excluded.ratings, overall = excluded.overall, photos = excluded.photos, tags = excluded.tags, updated_at = excluded.updated_at`
+    ).bind(id, ranking, data.brand, data.location, data.description, JSON.stringify(data.ratings), data.overall, JSON.stringify(data.photos),
+      JSON.stringify(data.tags), createdAt, now),
     historyRow(env, ranking, entry, isNew ? "created" : "edited", now, editor),
   ]);
   return json({ entry });

@@ -4,11 +4,11 @@ rankings.matthewhearst.com: personal rankings, each with its own page and look. 
 
 A Cloudflare Worker serves everything:
 
-- `public/` holds the pages: `index.html` (home), `takeaway/` (the takeaway ranking), `shared/rankings.js` (API calls, login, photo uploads shared by every ranking).
+- `public/` holds the pages: `index.html` (home), `takeaway/` (the takeaway ranking), `badminton/` (a hub page plus shuttles, racquets, strings, shoes and grips, all sharing `badminton/ranking.js` and `style.css`), and `shared/rankings.js` (API calls, login, photo uploads shared by every ranking).
 - `src/worker.js` holds the API: entries, edit history, photos (KV) and logins.
 - `migrations/` holds the D1 database schema.
 
-Adding a ranking: add its categories to `RANKINGS` in `src/worker.js`, then add a folder in `public/` with its own design, using `shared/rankings.js`.
+Adding a ranking: add it to `RANKINGS` in `src/worker.js` (categories, the name of its second field, any info tags), then add a folder in `public/` with its own design, using `shared/rankings.js`. Badminton rankings also need an entry in `RANKINGS` in `public/badminton/ranking.js`.
 
 ## Who can edit
 
