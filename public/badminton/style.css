@@ -608,44 +608,94 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
 .rk-tag { background: var(--amber); border: 2px solid var(--navy); border-radius: 6px; padding: 0 7px; font-size: 0.8rem; font-weight: 600; }
 @media (max-width: 560px) { .rk-list li { flex-direction: column; align-items: flex-start; } .rk-actions { justify-content: flex-start; } }
 
-/* ---------- hub: the rankings as boxes on a court ---------- */
+/* ---------- hub: the rankings as a half court ---------- */
 
+/* Seen from above with the net on the right. The white gap between boxes is the court lines.
+   The tramlines are wider than real ones so their text fits. */
 .court-grid {
   list-style: none;
   margin: 0;
   padding: 6px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: minmax(190px, 1fr) 4fr 26px;
+  grid-template-rows: auto minmax(200px, auto) minmax(200px, auto) auto;
+  grid-template-areas:
+    "back side-a net"
+    "back box-a  net"
+    "back box-b  net"
+    "back side-b net";
   gap: 6px;
   background: var(--line);
   border: var(--edge);
   border-radius: 14px;
   box-shadow: var(--pop);
 }
-.court-grid li { display: flex; }
+.court-grid li { display: flex; min-width: 0; }
+.area-back { grid-area: back; }
+.area-side-a { grid-area: side-a; }
+.area-box-a { grid-area: box-a; }
+.area-box-b { grid-area: box-b; }
+.area-side-b { grid-area: side-b; }
+/* The net: white tape over a mesh, the same as under the header. */
+.area-net {
+  grid-area: net;
+  margin: -6px -6px -6px 0;
+  border-left: 3px solid var(--navy);
+  border-radius: 0 9px 9px 0;
+  background:
+    linear-gradient(var(--line), var(--line)) left / 6px 100% no-repeat,
+    repeating-linear-gradient(45deg, rgba(19, 35, 58, 0.55) 0 1.5px, transparent 1.5px 9px),
+    repeating-linear-gradient(-45deg, rgba(19, 35, 58, 0.55) 0 1.5px, transparent 1.5px 9px),
+    var(--court-deep);
+}
+
 .tile {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 210px;
   padding: 22px 22px 20px;
   background: var(--court);
   color: var(--line);
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 .tile:hover { background: var(--court-deep); }
 .tile h2 { margin: 0; font: italic 800 clamp(2.6rem, 5vw, 3.6rem)/0.95 var(--head); text-shadow: 0.04em 0.04em 0 var(--navy); }
 .tile-cats { margin: 8px 0 0; color: rgba(255, 255, 255, 0.8); }
 .tile-facts { margin: auto 0 0; padding-top: 18px; font-weight: 500; }
 .tile-facts strong { display: block; color: var(--amber); font: 700 1.3rem/1.15 var(--head); }
-/* The first box spans two, like the back of the court. */
-.court-grid li:first-child { grid-column: span 2; }
+
+/* Side tramlines: one row of name, categories and what's top. */
+.tile.thin { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; padding: 14px 22px; }
+.tile.thin h2 { font-size: 2rem; }
+.tile.thin .tile-cats { margin: 0; }
+.tile.thin .tile-facts { margin: 0 0 0 auto; padding: 0; }
+.tile.thin .tile-facts strong { display: inline; margin-left: 4px; }
 
 @media (max-width: 760px) {
-  .court-grid { grid-template-columns: 1fr; }
-  .court-grid li:first-child { grid-column: auto; }
-  .tile { min-height: 160px; }
+  /* Too narrow for strips side by side, so the court stacks in order from the back. */
+  .court-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas: "back" "side-a" "box-a" "box-b" "side-b" "net";
+  }
+  /* The net runs across the bottom instead. */
+  .court-grid .area-net {
+    height: 26px;
+    margin: 0 -6px -6px;
+    border-left: 0;
+    border-top: 3px solid var(--navy);
+    border-radius: 0 0 9px 9px;
+    background:
+      linear-gradient(var(--line), var(--line)) top / 100% 6px no-repeat,
+      repeating-linear-gradient(45deg, rgba(19, 35, 58, 0.55) 0 1.5px, transparent 1.5px 9px),
+      repeating-linear-gradient(-45deg, rgba(19, 35, 58, 0.55) 0 1.5px, transparent 1.5px 9px),
+      var(--court-deep);
+  }
+  .court-grid li { min-height: 0; }
+  .tile { min-height: 150px; }
+  .tile.thin { min-height: 0; }
+  .tile.thin .tile-facts { margin: 0; flex-basis: 100%; }
 }
 
 /* ---------- footer ---------- */
