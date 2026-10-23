@@ -617,13 +617,13 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
   margin: 0;
   padding: 6px;
   display: grid;
-  grid-template-columns: minmax(190px, 1fr) 4fr 26px;
+  grid-template-columns: minmax(190px, 1fr) 3fr 1.4fr 26px;
   grid-template-rows: auto minmax(200px, auto) minmax(200px, auto) auto;
   grid-template-areas:
-    "back side-a net"
-    "back box-a  net"
-    "back box-b  net"
-    "back side-b net";
+    "back side-a side-a net"
+    "back box-a  front  net"
+    "back box-b  front  net"
+    "back side-b side-b net";
   gap: 6px;
   background: var(--line);
   border: var(--edge);
@@ -636,6 +636,8 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
 .area-box-a { grid-area: box-a; }
 .area-box-b { grid-area: box-b; }
 .area-side-b { grid-area: side-b; }
+/* The front court: open floor between the short service line and the net, with no centre line. */
+.area-front { grid-area: front; background: var(--court); border-radius: 4px; }
 /* The net: white tape over a mesh, the same as under the header. */
 .area-net {
   grid-area: net;
@@ -677,8 +679,9 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
   .court-grid {
     grid-template-columns: 1fr;
     grid-template-rows: none;
-    grid-template-areas: "back" "side-a" "box-a" "box-b" "side-b" "net";
+    grid-template-areas: "back" "side-a" "box-a" "box-b" "side-b" "front" "net";
   }
+  .court-grid .area-front { height: 64px; }
   /* The net runs across the bottom instead. */
   .court-grid .area-net {
     height: 26px;
