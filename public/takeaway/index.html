@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Takeaways | The Rankings</title>
+  <meta name="description" content="Every McDonald's, KFC and the rest, scored out of 10.">
+  <meta name="theme-color" content="#1E8C8C">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <nav class="topbar">
+      <a class="home-link" href="/">The Rankings</a>
+      <div class="account" id="account"></div>
+    </nav>
+
+    <div class="hero-inner">
+      <h1 class="sign">
+        <span>The</span>
+        <span>Takeaway</span>
+        <span>Rankings</span>
+      </h1>
+      <p class="hero-sub">Every McDonald's, KFC and the rest I've eaten at, scored out of 10.</p>
+      <button class="champ" id="champ" hidden></button>
+    </div>
+  </header>
+
+  <main>
+    <div class="views" role="tablist" aria-label="View">
+      <button role="tab" id="tab-spots" aria-selected="true" aria-controls="spots">All spots</button>
+      <button role="tab" id="tab-board" aria-selected="false" aria-controls="board">The board</button>
+    </div>
+
+    <section id="spots" role="tabpanel" aria-labelledby="tab-spots">
+      <div class="toolbar">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+          <input id="search" type="search" placeholder="Filter by location" aria-label="Filter by location">
+        </label>
+        <label class="sort">
+          <span>Sort</span>
+          <select id="sort">
+            <option value="rating-desc">Rating, high to low</option>
+            <option value="rating-asc">Rating, low to high</option>
+            <option value="az">A to Z</option>
+            <option value="za">Z to A</option>
+          </select>
+        </label>
+      </div>
+      <div class="brands" id="brands" aria-label="Filter by brand"></div>
+      <div class="grid" id="grid" aria-live="polite"></div>
+    </section>
+
+    <section id="board" role="tabpanel" aria-labelledby="tab-board" hidden>
+      <div class="menuboard">
+        <ol id="board-list"></ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a href="/">More rankings</a>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

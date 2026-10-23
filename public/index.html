@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Rankings</title>
+  <meta name="description" content="Matthew's rankings of takeaways and more, each scored out of 10.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FFF3E0;
+      --fg: #3B2416;
+      --muted: #7A5C48;
+      --rule: #3B2416;
+      --shadow: #3B2416;
+      --teal: #1E8C8C;
+      --cherry: #D7263D;
+      --cream: #FFF3E0;
+      --butter: #F2B33D;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #241812; --fg: #FFF3E0; --muted: #CDB8A6; --rule: #CDB8A6; --shadow: #000000; }
+    }
+    :root[data-theme="dark"] { --bg: #241812; --fg: #FFF3E0; --muted: #CDB8A6; --rule: #CDB8A6; --shadow: #000000; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 400 1.05rem/1.5 "Fredoka", system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--fg); outline-offset: 4px; }
+
+    header {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: clamp(40px, 10vh, 110px) 16px 40px;
+    }
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      font-size: clamp(3.6rem, 14vw, 10rem);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      text-shadow: 0.05em 0.05em 0 var(--teal);
+    }
+
+    main { max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 16px 60px; flex: 1; }
+    .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+
+    /* Each ranking shows up in its own page's look. */
+    .door {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: clamp(22px, 4vw, 40px);
+      border-radius: 28px;
+      text-decoration: none;
+    }
+    .door-takeaway {
+      background: var(--teal);
+      color: var(--cream);
+      border: 4px solid #3B2416;
+      box-shadow: 7px 7px 0 var(--shadow);
+    }
+    .door-takeaway:active { transform: translate(3px, 3px); box-shadow: 4px 4px 0 var(--shadow); }
+    .door-takeaway h2 {
+      margin: 0;
+      font: 700 clamp(2.6rem, 8vw, 5.2rem)/0.9 "Fredoka", sans-serif;
+      text-shadow: 0.05em 0.05em 0 var(--cherry);
+    }
+    .door-takeaway .facts { font-weight: 500; font-size: 1.15rem; text-align: right; max-width: 24ch; }
+    .door-takeaway .facts strong { display: block; font-weight: 700; font-size: 1.9rem; line-height: 1.1; color: var(--butter); }
+
+    .soon {
+      border: 3px dashed var(--rule);
+      border-radius: 28px;
+      padding: 26px clamp(22px, 4vw, 40px);
+      color: var(--muted);
+      font-size: 1.15rem;
+    }
+
+    footer { text-align: center; padding: 24px 16px 32px; color: var(--muted); }
+
+    @media (max-width: 560px) {
+      .door-takeaway .facts { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Rankings</h1>
+  </header>
+
+  <main>
+    <ul class="list">
+      <li>
+        <a class="door door-takeaway" href="/takeaway/">
+          <h2>Takeaways</h2>
+          <span class="facts" id="takeaway-facts">McDonald's, KFC and the rest</span>
+        </a>
+      </li>
+      <li class="soon">More rankings on the way.</li>
+    </ul>
+  </main>
+
+  <footer>rankings.matthewhearst.com</footer>
+
+  <script type="module">
+    import { esc } from "/shared/rankings.js";
+    try {
+      const { entries } = await (await fetch("/api/takeaway/entries")).json();
+      if (entries.length) {
+        const top = [...entries].sort((a, b) => b.overall - a.overall)[0];
+        const score = top.overall >= 10 ? "10" : (Math.round(top.overall * 10) / 10).toFixed(1);
+        document.getElementById("takeaway-facts").innerHTML =
+          `${entries.length} spot${entries.length === 1 ? "" : "s"} ranked, number one is<strong>${esc(top.brand)} ${esc(top.location)}, ${score}</strong>`;
+      }
+    } catch {}
+  </script>
+</body>
+</html>

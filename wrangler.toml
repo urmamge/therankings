@@ -1,0 +1,46 @@
+name = "therankings"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Served at rankings.matthewhearst.com (Cloudflare creates the DNS record).
+routes = [{ pattern = "rankings.matthewhearst.com", custom_domain = true }]
+
+# Lets the Worker import verification-email.txt as text.
+[[rules]]
+type = "Text"
+globs = ["**/*.txt"]
+fallthrough = true
+
+# The pages (home + one folder per ranking) are static files in public/.
+# Anything that isn't a file there (/api/*, /photos/*) goes to the Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Entries, edit history, login codes and signed-in devices. See migrations/.
+[[d1_databases]]
+binding = "DB"
+database_name = "therankings"
+database_id = "f10335a0-2382-49b2-92d4-eb65de82189e"
+migrations_dir = "migrations"
+
+# Photos, one KV value each (R2 isn't enabled on the account).
+[[kv_namespaces]]
+binding = "PHOTOS"
+id = "311e2d1973494d2cb63679b4b5bcf1a7"
+
+[vars]
+# Address for the site (forwarded to Gmail by Cloudflare Email Routing). Request alerts come from it.
+LOGIN_EMAIL = "takeaway@rankings.matthewhearst.com"
+EMAIL_FROM = "takeaway@rankings.matthewhearst.com"
+
+# Sends the owner an email when someone asks for access. It can only send to verified
+# Email Routing destinations, which is fine: codes are emailed by the owner by hand.
+[[send_email]]
+name = "EMAIL"
+
+# Secrets (npx wrangler secret put <NAME>), kept in the gitignored .secrets.env:
+#   PERMANENT_CODE   the owner's code; logs in on any device, never used up
+#   NOTIFY_EMAIL     where request alerts go (a verified Email Routing destination)
+# Locally, .dev.vars (gitignored) sets DEV_MODE = "1", which prints those alerts in the terminal.
