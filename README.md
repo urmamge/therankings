@@ -1,6 +1,6 @@
 # The Rankings
 
-rankings.matthewhearst.com: personal rankings, each with its own page and look. Takeaways is the first.
+rankings.matthewhearst.com: personal rankings, each with its own page and look.
 
 A Cloudflare Worker serves everything:
 
