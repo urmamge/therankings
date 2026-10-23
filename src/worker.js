@@ -71,6 +71,7 @@ async function route(req, env) {
   if (m && method === "DELETE") return removeDevice(req, env, m[1]);
 
   if (path === "/api/photos" && method === "POST") return uploadPhoto(req, env);
+  if (path === "/api/badminton/bag" && method === "GET") return badmintonBag(env);
 
   m = path.match(/^\/api\/([a-z-]+)\/entries(?:\/([a-z0-9-]+))?(\/history)?$/);
   if (m && RANKINGS[m[1]]) {
@@ -97,6 +98,7 @@ function rowToEntry(row) {
     overall: row.overall,
     photos: JSON.parse(row.photos),
     tags: JSON.parse(row.tags || "{}"),
+    inBag: !!row.in_bag,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     edits: row.edits ?? 0,
@@ -109,6 +111,14 @@ async function listEntries(env, ranking) {
      FROM entries e WHERE e.ranking = ?`
   ).bind(ranking).all();
   return json({ entries: results.map(rowToEntry) });
+}
+
+// Everything in the owner's bag across the badminton rankings, for the badminton page.
+async function badmintonBag(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM entries WHERE in_bag = 1 AND ranking LIKE 'badminton-%' ORDER BY ranking, brand, location"
+  ).all();
+  return json({ items: results.map((r) => ({ ranking: r.ranking, ...rowToEntry(r) })) });
 }
 
 // Who made each change is only shown to the owner.
@@ -173,16 +183,21 @@ function slugify(s) {
 }
 
 async function saveEntry(req, env, ranking, id) {
-  const editor = editorName(await requireSession(req, env));
-  const data = cleanEntry(await req.json(), ranking);
+  const s = await requireSession(req, env);
+  const editor = editorName(s);
+  const body = await req.json();
+  const data = cleanEntry(body, ranking);
   const now = Date.now();
 
+  // Only the owner puts things in their bag; anyone else's save leaves it as it was.
   const isNew = !id;
   let createdAt = now;
+  data.inBag = s.role === "owner" ? !!body.inBag : false;
   if (id) {
-    const existing = await env.DB.prepare("SELECT created_at FROM entries WHERE id = ? AND ranking = ?").bind(id, ranking).first();
+    const existing = await env.DB.prepare("SELECT created_at, in_bag FROM entries WHERE id = ? AND ranking = ?").bind(id, ranking).first();
     if (!existing) throw new HttpError(404, "That entry doesn't exist any more.");
     createdAt = existing.created_at;
+    if (s.role !== "owner") data.inBag = !!existing.in_bag;
   } else {
     // Readable ids for share links: mcdonalds-botanic-avenue, then -2, -3 for repeats.
     const base = slugify(`${data.brand} ${data.location}`);
@@ -193,12 +208,13 @@ async function saveEntry(req, env, ranking, id) {
   const entry = { id, ...data, createdAt, updatedAt: now };
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO entries (id, ranking, brand, location, description, ratings, overall, photos, tags, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO entries (id, ranking, brand, location, description, ratings, overall, photos, tags, in_bag, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET brand = excluded.brand, location = excluded.location, description = excluded.description,
-         ratings = excluded.ratings, overall = excluded.overall, photos = excluded.photos, tags = excluded.tags, updated_at = excluded.updated_at`
+         ratings = excluded.ratings, overall = excluded.overall, photos = excluded.photos, tags = excluded.tags, in_bag = excluded.in_bag,
+         updated_at = excluded.updated_at`
     ).bind(id, ranking, data.brand, data.location, data.description, JSON.stringify(data.ratings), data.overall, JSON.stringify(data.photos),
-      JSON.stringify(data.tags), createdAt, now),
+      JSON.stringify(data.tags), data.inBag ? 1 : 0, createdAt, now),
     historyRow(env, ranking, entry, isNew ? "created" : "edited", now, editor),
   ]);
   return json({ entry });

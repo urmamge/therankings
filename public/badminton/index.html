@@ -32,7 +32,7 @@
   <main>
     <!-- The five rankings as a half court seen from above: the back tramline on the left, the side
          tramlines along the top and bottom (running up to the net), the two service boxes in the middle,
-         then the open front court between the short service line and the net on the right.
+         then the front court ("In my bag") between the short service line and the net on the right.
          Listed in reading order; CSS places them. -->
     <ul class="court-grid">
       <li class="area-box-a"><a class="tile" href="/badminton/racquets/">
@@ -60,7 +60,13 @@
         <p class="tile-cats">Comfort, grip, support, durability</p>
         <p class="tile-facts" data-facts="shoes">Nothing ranked yet</p>
       </a></li>
-      <li class="area-front" aria-hidden="true"></li>
+      <li class="area-front">
+        <section class="bag" aria-labelledby="bag-title">
+          <h2 id="bag-title">In my bag</h2>
+          <p class="bag-sub">What I'm playing with right now</p>
+          <ul class="bag-list" id="bag-list"><li class="bag-empty">Nothing in the bag yet.</li></ul>
+        </section>
+      </li>
       <li class="area-net" aria-hidden="true"></li>
     </ul>
   </main>

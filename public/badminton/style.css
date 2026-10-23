@@ -257,6 +257,7 @@ select:focus { outline: 0; box-shadow: 0 0 0 4px var(--amber); }
 .card h3 { margin: 0; font: 700 1.65rem/1.05 var(--head); }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
 .tags span { border: 2px solid var(--navy); border-radius: 6px; padding: 0 7px; font-weight: 600; font-size: 0.85rem; }
+.tags .bag-tag { background: var(--court); border-color: var(--court); color: var(--line); }
 .card-desc {
   margin: 8px 0 0;
   display: -webkit-box;
@@ -412,6 +413,14 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
   color: var(--navy);
 }
 .scorecard > * { max-width: 360px; margin-inline: auto; }
+.sc-bag {
+  margin: 0 auto 12px;
+  padding: 8px 14px;
+  border: 2px solid var(--navy);
+  border-radius: 10px;
+  background: var(--amber);
+  font-weight: 600;
+}
 .sc-head {
   display: flex;
   justify-content: space-between;
@@ -478,6 +487,21 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
 .field input:focus, .field textarea:focus { outline: 0; box-shadow: 0 0 0 4px var(--amber); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 
+.bag-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: var(--edge);
+  border-radius: 10px;
+  background: #EEF5F1;
+  cursor: pointer;
+}
+.bag-switch input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--court); flex: none; }
+.bag-switch strong { display: block; font: 700 1.2rem/1.1 var(--head); }
+.bag-switch span { color: var(--muted); }
+.bag-switch strong { color: var(--navy); }
 .segments { display: flex; border: 2px solid var(--navy); border-radius: 10px; overflow: hidden; }
 .segments button { flex: 1; border: 0; background: var(--paper); padding: 9px 4px; font-weight: 600; }
 .segments button + button { border-left: 2px solid var(--navy); }
@@ -630,14 +654,32 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
   border-radius: 14px;
   box-shadow: var(--pop);
 }
-.court-grid li { display: flex; min-width: 0; }
+.court-grid > li { display: flex; min-width: 0; }
 .area-back { grid-area: back; }
 .area-side-a { grid-area: side-a; }
 .area-box-a { grid-area: box-a; }
 .area-box-b { grid-area: box-b; }
 .area-side-b { grid-area: side-b; }
-/* The front court: open floor between the short service line and the net, with no centre line. */
+/* The front court, between the short service line and the net (no centre line): what's in my bag. */
 .area-front { grid-area: front; background: var(--court); border-radius: 4px; }
+.bag { flex: 1; padding: 22px 20px 20px; color: var(--line); min-width: 0; }
+.bag h2 { margin: 0; font: italic 800 clamp(2rem, 3.4vw, 2.6rem)/0.95 var(--head); text-shadow: 0.04em 0.04em 0 var(--navy); }
+.bag-sub { margin: 6px 0 14px; color: rgba(255, 255, 255, 0.8); }
+.bag-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.bag-list a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(14, 22, 33, 0.35);
+  text-decoration: none;
+}
+.bag-list a:hover { background: rgba(14, 22, 33, 0.55); }
+.bag-kind { grid-column: 1; font-size: 0.82rem; color: rgba(255, 255, 255, 0.75); font-weight: 600; }
+.bag-name { grid-column: 1; font: 700 1.15rem/1.15 var(--head); overflow-wrap: anywhere; }
+.bag-score { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 700 1.5rem/1 var(--head); color: var(--amber); font-variant-numeric: tabular-nums; }
+.bag-empty { color: rgba(255, 255, 255, 0.8); }
 /* The net: white tape over a mesh, the same as under the header. */
 .area-net {
   grid-area: net;
@@ -681,7 +723,7 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
     grid-template-rows: none;
     grid-template-areas: "back" "side-a" "box-a" "box-b" "side-b" "front" "net";
   }
-  .court-grid .area-front { height: 64px; }
+  .court-grid .area-front { min-height: 0; }
   /* The net runs across the bottom instead. */
   .court-grid .area-net {
     height: 26px;
@@ -695,7 +737,7 @@ dialog::backdrop { background: rgba(14, 22, 33, 0.65); }
       repeating-linear-gradient(-45deg, rgba(19, 35, 58, 0.55) 0 1.5px, transparent 1.5px 9px),
       var(--court-deep);
   }
-  .court-grid li { min-height: 0; }
+  .court-grid > li { min-height: 0; }
   .tile { min-height: 150px; }
   .tile.thin { min-height: 0; }
   .tile.thin .tile-facts { margin: 0; flex-basis: 100%; }

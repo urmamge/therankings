@@ -216,7 +216,7 @@ function card(e) {
     <div class="card-body">
       <p class="card-brand">${esc(e.brand)}</p>
       <h3>${esc(e.location)}</h3>
-      ${tags.length ? `<p class="tags">${tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>` : ""}
+      ${tags.length || e.inBag ? `<p class="tags">${e.inBag ? '<span class="bag-tag">In my bag</span>' : ""}${tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>` : ""}
       ${e.description ? `<p class="card-desc">${esc(e.description)}</p>` : ""}
     </div>
     <div class="badge tier-${tier(e.overall)}" aria-label="${fmt(e.overall)} out of 10"><b>${fmt(e.overall)}</b></div>
@@ -292,6 +292,7 @@ function showDetail(id, { push = true } = {}) {
         <div class="history" hidden></div>
       </div>
       <aside class="scorecard" aria-label="Scores">
+        ${e.inBag ? `<p class="sc-bag">In my bag: I'm using this ${esc(R.one)} right now</p>` : ""}
         <div class="sc-head"><span>Scorecard</span><span>${rank} of ${state.entries.length}</span></div>
         <table>
           <thead><tr><th scope="col">Category</th><th scope="col" class="w">Weight</th><th scope="col" class="s">Score</th></tr></thead>
@@ -335,6 +336,7 @@ function describeChange(prev, next) {
     const b = next.tags?.[t.key];
     if (a !== b) bits.push(b ? `${t.label.toLowerCase()} set to ${b}` : `${t.label.toLowerCase()} removed`);
   }
+  if (!!prev.inBag !== !!next.inBag) bits.push(next.inBag ? "put in my bag" : "taken out of my bag");
   if (prev.description !== next.description) bits.push("write-up changed");
   const added = next.photos.filter((p) => !prev.photos.includes(p)).length;
   const removed = prev.photos.filter((p) => !next.photos.includes(p)).length;
@@ -395,8 +397,8 @@ function tagField(t, value) {
 function openEditor(existing) {
   closeOpen();
   const draft = existing
-    ? structuredClone({ brand: existing.brand, location: existing.location, description: existing.description, ratings: existing.ratings, photos: existing.photos, tags: existing.tags || {} })
-    : { brand: "", location: "", description: "", ratings: {}, photos: [], tags: {} };
+    ? structuredClone({ brand: existing.brand, location: existing.location, description: existing.description, ratings: existing.ratings, photos: existing.photos, tags: existing.tags || {}, inBag: !!existing.inBag })
+    : { brand: "", location: "", description: "", ratings: {}, photos: [], tags: {}, inBag: false };
   let uploading = 0;
 
   const d = document.createElement("dialog");
@@ -415,6 +417,8 @@ function openEditor(existing) {
         </label>
       </div>
       ${R.tags.length ? `<div class="field-row">${R.tags.map((t) => tagField(t, draft.tags[t.key])).join("")}</div>` : ""}
+      ${auth.role === "owner" ? `<label class="bag-switch"><input type="checkbox" name="inBag"${draft.inBag ? " checked" : ""}>
+        <span><strong>In my bag</strong> I'm using this ${esc(R.one)} right now. It shows on the badminton page.</span></label>` : ""}
 
       <h3 class="editor-sub">Ratings</h3>
       <p class="editor-hint">Rate whichever apply. The weight decides how much each one counts towards the overall score.</p>
@@ -595,6 +599,7 @@ function openEditor(existing) {
     draft.brand = form.brand.value;
     draft.location = form.location.value;
     draft.description = form.description.value;
+    if (form.inBag) draft.inBag = form.inBag.checked;
     const btn = form.querySelector("[type=submit]");
     btn.disabled = true;
     try {
