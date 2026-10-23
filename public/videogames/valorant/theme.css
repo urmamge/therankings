@@ -93,3 +93,6 @@ body { font-weight: 500; font-size: 1.08rem; }
 .sc-total { background: var(--highlight); color: #FFFFFF; }
 .game-tile .tile-facts strong, .tile-facts strong { color: var(--highlight); }
 .tier-good { background: #F2C94C; }
+
+/* Agent art has lots of empty space around the character, so cards zoom in on them. */
+.card-top .art-portrait { transform: scale(1.8); transform-origin: 50% 20%; }

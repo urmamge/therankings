@@ -11,12 +11,12 @@ const TEAMS = [["skill", "Skill"], ["entertainment", "Entertainment"], ["consist
 const RANKINGS = {
   "valorant/agents": {
     slug: "valorant-agents", game: "Valorant", title: "Agents", one: "agent", example: "Jett",
-    sub: "Every Valorant agent, scored out of 10.", cats: PICKS,
+    sub: "Every Valorant agent, scored out of 10.", cats: PICKS, catalog: true, art: "portrait",
     tags: [{ key: "role", label: "Role", options: ["Duelist", "Initiator", "Controller", "Sentinel"] }],
   },
   "valorant/maps": {
     slug: "valorant-maps", game: "Valorant", title: "Maps", one: "map", example: "Ascent",
-    sub: "Every Valorant map, scored out of 10.", cats: MAPS, tags: [],
+    sub: "Every Valorant map, scored out of 10.", cats: MAPS, tags: [], catalog: true, art: "scene",
   },
   "valorant/teams": {
     slug: "valorant-teams", game: "Valorant", title: "Esports teams", one: "team", example: "Fnatic",
@@ -25,12 +25,12 @@ const RANKINGS = {
   },
   "overwatch/heroes": {
     slug: "overwatch-heroes", game: "Overwatch", title: "Heroes", one: "hero", example: "Tracer",
-    sub: "Every Overwatch hero, scored out of 10.", cats: PICKS,
+    sub: "Every Overwatch hero, scored out of 10.", cats: PICKS, catalog: true, art: "portrait",
     tags: [{ key: "role", label: "Role", options: ["Tank", "Damage", "Support"] }],
   },
   "overwatch/maps": {
     slug: "overwatch-maps", game: "Overwatch", title: "Maps", one: "map", example: "King's Row",
-    sub: "Every Overwatch map, scored out of 10.", cats: MAPS,
+    sub: "Every Overwatch map, scored out of 10.", cats: MAPS, catalog: true, art: "scene",
     tags: [{ key: "mode", label: "Mode", options: ["Control", "Escort", "Hybrid", "Push", "Flashpoint", "Clash"] }],
   },
   "overwatch/teams": {
@@ -70,6 +70,23 @@ const plate = (text) => `<span class="plate" aria-hidden="true" style="--len:${M
 
 // Entries store the name in the shared "location" field.
 const title = (e) => e.location;
+
+// Every current agent, hero or map, with official art, from /api/catalog. Esports teams have none.
+let catalogItems = [];
+const catalogByName = new Map();
+// Names match whatever the apostrophes and accents: "Kings Row" with ' or ’, "Lucio" or "Lúcio".
+const nameKey = (n) => n.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[’‘`]/g, "'").trim();
+async function loadCatalog() {
+  if (!R.catalog) return;
+  try {
+    catalogItems = (await api(`/api/catalog/${R.slug}`)).items;
+  } catch {
+    return;
+  }
+  for (const item of catalogItems) catalogByName.set(nameKey(item.name), item);
+}
+const artFor = (e) => (e.photos.length ? null : catalogByName.get(nameKey(e.location))?.image);
+const artImg = (src, alt = "") => `<img class="art art-${R.art}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer">`;
 const fmt = (n) => (n == null ? "–" : n >= 10 ? "10" : (Math.round(n * 10) / 10).toFixed(1));
 const tier = (n) => (n >= 8 ? "great" : n >= 6 ? "good" : n >= 4 ? "meh" : "bad");
 const tagList = (e) => R.tags.filter((t) => e.tags?.[t.key]).map((t) => e.tags[t.key]);
@@ -133,6 +150,22 @@ function render() {
   renderBrands();
   renderGrid();
   renderBoard();
+  renderTodo();
+}
+
+// Everything in the catalog that hasn't been rated yet. Logged in, each one opens the editor ready to rate.
+function renderTodo() {
+  const el = $("#todo");
+  const ranked = new Set(state.entries.map((e) => nameKey(e.location)));
+  const todo = catalogItems.filter((i) => !ranked.has(nameKey(i.name)));
+  el.hidden = !todo.length;
+  if (!todo.length) return;
+  const plural = R.one === "hero" ? "heroes" : `${R.one}s`;
+  el.innerHTML = `<h2>Still to rank</h2>
+    <p>${todo.length} ${todo.length === 1 ? R.one : plural} I haven't rated yet.</p>
+    <div class="todo-list">${todo.map((i) => auth.signedIn
+      ? `<button type="button" class="chip" data-todo="${esc(i.name)}">${esc(i.name)}</button>`
+      : `<span class="chip">${esc(i.name)}</span>`).join("")}</div>`;
 }
 
 function renderAccount() {
@@ -186,10 +219,11 @@ function visible() {
 function card(e) {
   const [bg, ink] = itemColours(e);
   const tags = tagList(e);
+  const art = artFor(e);
   return `<a class="card" href="?item=${encodeURIComponent(e.id)}" data-open="${esc(e.id)}" style="--brand:${bg};--brand-ink:${ink}">
-    <div class="card-top${e.photos.length ? " has-photo" : ""}">${e.photos.length ? `<img src="${photoUrl(e.photos[0])}" alt="" loading="lazy">` : plate(e.location)}</div>
+    <div class="card-top${e.photos.length || art ? " has-photo" : ""}">${e.photos.length ? `<img src="${photoUrl(e.photos[0])}" alt="" loading="lazy">` : art ? artImg(art) : plate(e.location)}</div>
     <div class="card-body">
-      <h3${e.photos.length ? "" : ' class="visually-hidden"'}>${esc(e.location)}</h3>
+      <h3${e.photos.length || art ? "" : ' class="visually-hidden"'}>${esc(e.location)}</h3>
       ${tags.length ? `<p class="tags">${tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>` : ""}
       ${e.description ? `<p class="card-desc">${esc(e.description)}</p>` : ""}
     </div>
@@ -257,7 +291,7 @@ function showDetail(id, { push = true } = {}) {
       <button class="detail-close" aria-label="Close">×</button>
       <div class="detail-main">
         ${e.photos.length ? `<div class="photos">${e.photos.map((p) => `<img src="${photoUrl(p)}" alt="Photo of ${esc(title(e))}">`).join("")}</div>`
-          : `<div class="photos photos-none">${plate(e.location)}</div>`}
+          : artFor(e) ? `<div class="photos photos-art">${artImg(artFor(e), e.location)}</div>` : `<div class="photos photos-none">${plate(e.location)}</div>`}
         <div class="detail-title">
           <div><p class="detail-brand">${esc([R.game, ...tagList(e)].join(" "))}</p><h2>${esc(e.location)}</h2></div>
           <div class="badge tier-${tier(e.overall)}" aria-hidden="true"><b>${fmt(e.overall)}</b></div>
@@ -359,11 +393,11 @@ function tagField(t, value) {
     </div></div>`;
 }
 
-function openEditor(existing) {
+function openEditor(existing, preset) {
   closeOpen();
   const draft = existing
     ? structuredClone({ location: existing.location, description: existing.description, ratings: existing.ratings, photos: existing.photos, tags: existing.tags || {} })
-    : { location: "", description: "", ratings: {}, photos: [], tags: {} };
+    : { location: preset?.name || "", description: "", ratings: {}, photos: [], tags: preset?.tag && R.tags[0] ? { [R.tags[0].key]: preset.tag } : {} };
   let uploading = 0;
 
   const d = document.createElement("dialog");
@@ -373,7 +407,8 @@ function openEditor(existing) {
       <button type="button" class="detail-close" aria-label="Close">×</button>
       <h2>${existing ? `Edit ${esc(title(existing))}` : `Add a ${esc(R.one)}`}</h2>
       <label class="field"><span>Name</span>
-        <input name="location" required maxlength="80" placeholder="${esc(R.example)}" value="${esc(draft.location)}" autocomplete="off">
+        <input name="location" required maxlength="80" placeholder="${esc(R.example)}" value="${esc(draft.location)}" autocomplete="off"${catalogItems.length ? ' list="name-list"' : ""}>
+        ${catalogItems.length ? `<datalist id="name-list">${catalogItems.map((i) => `<option value="${esc(i.name)}">`).join("")}</datalist>` : ""}
       </label>
       ${R.tags.length ? `<div class="field-row">${R.tags.map((t) => tagField(t, draft.tags[t.key])).join("")}</div>` : ""}
 
@@ -441,6 +476,20 @@ function openEditor(existing) {
     })
   );
   d.querySelectorAll("select[data-tag]").forEach((sel) => sel.addEventListener("change", () => (draft.tags[sel.dataset.tag] = sel.value || undefined)));
+
+  // Picking a known name fills in its role or mode, unless one's already chosen.
+  const paintTags = () => {
+    d.querySelectorAll(".segments").forEach((g) => g.querySelectorAll("[data-value]").forEach((b) => b.setAttribute("aria-checked", b.dataset.value === draft.tags[g.dataset.tag])));
+    d.querySelectorAll("select[data-tag]").forEach((sel) => (sel.value = draft.tags[sel.dataset.tag] || ""));
+  };
+  form.location.addEventListener("input", () => {
+    const item = catalogByName.get(nameKey(form.location.value));
+    const first = R.tags[0];
+    if (item?.tag && first && !draft.tags[first.key] && first.options.includes(item.tag)) {
+      draft.tags[first.key] = item.tag;
+      paintTags();
+    }
+  });
 
   function paintRate(fs) {
     const r = draft.ratings[fs.dataset.cat];
@@ -591,7 +640,7 @@ async function requireLogin() {
 // ---------- events ----------
 
 document.addEventListener("click", async (e) => {
-  const t = e.target.closest("[data-open],[data-add],[data-edit],[data-login],[data-devices],[data-requests],[data-brand],[data-clear],[data-retry]");
+  const t = e.target.closest("[data-open],[data-add],[data-edit],[data-todo],[data-login],[data-devices],[data-requests],[data-brand],[data-clear],[data-retry]");
   if (!t) return;
   if (t.dataset.open !== undefined) {
     if (e.metaKey || e.ctrlKey || e.shiftKey) return; // let new-tab clicks through
@@ -602,6 +651,9 @@ document.addEventListener("click", async (e) => {
   } else if (t.dataset.edit !== undefined) {
     const entry = state.entries.find((x) => x.id === t.dataset.edit);
     if (entry && (await requireLogin())) openEditor(entry);
+  } else if (t.dataset.todo !== undefined) {
+    const item = catalogByName.get(nameKey(t.dataset.todo));
+    if (item && (await requireLogin())) openEditor(null, item);
   } else if (t.dataset.login !== undefined) {
     openLogin();
   } else if (t.dataset.devices !== undefined) {
@@ -670,6 +722,6 @@ window.addEventListener("popstate", () => {
 onAuthChange(() => render());
 
 renderShell();
-await Promise.all([checkAuth(), load()]);
+await Promise.all([checkAuth(), loadCatalog(), load()]);
 const startItem = new URLSearchParams(location.search).get("item");
 if (startItem) showDetail(startItem, { push: false });
