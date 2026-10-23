@@ -11,7 +11,7 @@ const RANKINGS = {
   takeaway: { categories: ["food", "drive", "sitin", "app"], name: "location", example: "McDonald's" },
   "badminton-shuttles": {
     categories: ["flight", "durability", "feel", "value"], name: "model", example: "Yonex",
-    tags: { type: ["Feather", "Nylon"] },
+    tags: { type: ["Feather", "Hybrid", "Nylon"] },
   },
   "badminton-racquets": {
     categories: ["power", "control", "handling", "value"], name: "model", example: "Yonex",

@@ -10,7 +10,7 @@ const RANKINGS = {
     slug: "badminton-shuttles", title: "Shuttles", one: "shuttle", sub: "Every shuttle I've played with, scored out of 10.",
     example: ["Yonex", "Aerosensa 50"],
     cats: [["flight", "Flight"], ["durability", "Durability"], ["feel", "Feel"], ["value", "Value"]],
-    tags: [{ key: "type", label: "Type", options: ["Feather", "Nylon"] }],
+    tags: [{ key: "type", label: "Type", options: ["Feather", "Hybrid", "Nylon"] }],
   },
   racquets: {
     slug: "badminton-racquets", title: "Racquets", one: "racquet", sub: "Every racquet I've played with, scored out of 10.",
