@@ -7,6 +7,10 @@ import VERIFICATION_EMAIL from "../verification-email.txt";
 // Each ranking's rating categories, the name of its second field (the takeaway's location, a
 // racquet's model) and any info tags with their allowed values. A new ranking needs an entry here
 // and a folder in public/.
+const GAME_PICKS = { categories: ["fun", "strength", "skill", "design"], noBrand: true };
+const GAME_MAPS = { categories: ["fun", "balance", "layout", "looks"], noBrand: true };
+const GAME_TEAMS = { categories: ["skill", "entertainment", "consistency", "fanbase"], noBrand: true };
+
 const RANKINGS = {
   takeaway: { categories: ["food", "drive", "sitin", "app"], name: "location", example: "McDonald's" },
   "badminton-shuttles": {
@@ -23,6 +27,13 @@ const RANKINGS = {
   },
   "badminton-shoes": { categories: ["comfort", "grip", "support", "durability"], name: "model", example: "Yonex" },
   "badminton-grips": { categories: ["tack", "comfort", "sweat", "durability"], name: "model", example: "Yonex" },
+  // Video game rankings have just a name, no brand.
+  "valorant-agents": { ...GAME_PICKS, name: "agent", tags: { role: ["Duelist", "Initiator", "Controller", "Sentinel"] } },
+  "valorant-maps": { ...GAME_MAPS, name: "map" },
+  "valorant-teams": { ...GAME_TEAMS, name: "team", tags: { region: ["Americas", "EMEA", "Pacific", "China"] } },
+  "overwatch-heroes": { ...GAME_PICKS, name: "hero", tags: { role: ["Tank", "Damage", "Support"] } },
+  "overwatch-maps": { ...GAME_MAPS, name: "map", tags: { mode: ["Control", "Escort", "Hybrid", "Push", "Flashpoint", "Clash"] } },
+  "overwatch-teams": { ...GAME_TEAMS, name: "team", tags: { region: ["North America", "EMEA", "Korea", "Japan", "Pacific", "China"] } },
 };
 const WEIGHTS = [0.5, 1, 2, 3];
 
@@ -148,9 +159,9 @@ function overallOf(ratings) {
 function cleanEntry(body, ranking) {
   const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
   const config = RANKINGS[ranking];
-  const brand = text(body.brand, 60);
+  const brand = config.noBrand ? "" : text(body.brand, 60);
   const location = text(body.location, 80);
-  if (!brand) throw new HttpError(400, `Add the brand, like ${config.example}.`);
+  if (!brand && !config.noBrand) throw new HttpError(400, `Add the brand, like ${config.example}.`);
   if (!location) throw new HttpError(400, `Add the ${config.name}.`);
 
   const ratings = {};
@@ -200,7 +211,7 @@ async function saveEntry(req, env, ranking, id) {
     if (s.role !== "owner") data.inBag = !!existing.in_bag;
   } else {
     // Readable ids for share links: mcdonalds-botanic-avenue, then -2, -3 for repeats.
-    const base = slugify(`${data.brand} ${data.location}`);
+    const base = slugify(`${data.brand} ${data.location}`.trim());
     id = base;
     for (let n = 2; await env.DB.prepare("SELECT 1 FROM entries WHERE id = ?").bind(id).first(); n++) id = `${base}-${n}`;
   }
