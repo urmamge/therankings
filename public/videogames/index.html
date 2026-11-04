@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video games | The Rankings</title>
+  <meta name="description" content="Rankings for the games I play: Valorant and Overwatch.">
+  <meta name="theme-color" content="#121418">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Chakra+Petch:wght@500;600;700&family=Jost:ital,wght@1,800&display=swap" rel="stylesheet">
+  <style>
+    /* A game library: a dark shelf with each game as its cover, in that game's own look. */
+    :root {
+      --bg: #121418;
+      --shelf: #1C1F26;
+      --fg: #F2F3F5;
+      --muted: #9AA1AD;
+      --edge: #2C313B;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 500 1.05rem/1.5 "Chakra Petch", system-ui, sans-serif; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--fg); outline-offset: 4px; }
+
+    header, main { max-width: 1200px; width: 100%; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+    header { padding-top: 22px; padding-bottom: 34px; }
+    .crumbs { margin: 0 0 clamp(30px, 8vh, 80px); font-weight: 600; }
+    .crumbs a { text-decoration: none; }
+    .crumbs a:hover { text-decoration: underline; text-underline-offset: 4px; }
+    h1 { margin: 0; font: 700 clamp(3.4rem, 12vw, 8rem)/0.9 "Chakra Petch", sans-serif; letter-spacing: -0.02em; }
+    .sub { margin: 14px 0 0; color: var(--muted); font-size: clamp(1.05rem, 2.4vw, 1.3rem); }
+
+    main { flex: 1; padding-bottom: 60px; }
+    /* The shelf the covers stand on. */
+    .shelf {
+      list-style: none;
+      margin: 0;
+      padding: 26px 26px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+      gap: 26px;
+      background: var(--shelf);
+      border: 1px solid var(--edge);
+      border-bottom: 14px solid #0B0C0F;
+      border-radius: 12px 12px 4px 4px;
+      padding-bottom: 26px;
+    }
+    .cover {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      aspect-ratio: 3 / 4;
+      padding: 22px;
+      overflow: hidden;
+      border-radius: 6px;
+      text-decoration: none;
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease;
+      container-type: inline-size;
+    }
+    .cover:hover { transform: translateY(-6px); }
+    .cover h2 { position: relative; margin: 0; line-height: 0.95; white-space: nowrap; }
+    .cover p { position: relative; margin: 8px 0 0; font-weight: 600; }
+
+    .cover-valorant { background: #0F1923; color: #ECE8E1; }
+    .cover-valorant::before { content: ""; position: absolute; top: -10%; right: -4%; width: 30%; height: 70%; background: #FF4655; transform: skewX(-20deg); }
+    .cover-valorant h2 { font: 400 min(3.4rem, 22cqi)/0.95 "Anton", sans-serif; text-transform: uppercase; }
+    .cover-valorant p { color: #FF4655; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .cover-overwatch { background: #233554; color: #FFFFFF; }
+    .cover-overwatch::before { content: ""; position: absolute; top: 12%; left: 50%; width: 70%; aspect-ratio: 1; border-radius: 50%; border: 26px solid #F99E1A; transform: translateX(-50%); }
+    .cover-overwatch h2 { font: italic 800 min(2.8rem, 15cqi)/0.95 "Jost", sans-serif; text-transform: uppercase; }
+    .cover-overwatch p { color: #F99E1A; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .cover-soon { border: 2px dashed var(--edge); box-shadow: none; color: var(--muted); justify-content: center; text-align: center; }
+    .cover-soon:hover { transform: none; }
+
+    footer { text-align: center; padding: 24px 16px 32px; color: var(--muted); }
+    footer a { color: var(--fg); font-weight: 600; text-underline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { .cover { transition: none; } .cover:hover { transform: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="crumbs"><a href="/">The Rankings</a></p>
+    <h1>Video games</h1>
+    <p class="sub">My opinion on the games I play</p>
+  </header>
+
+  <main>
+    <ul class="shelf">
+      <li><a class="cover cover-valorant" href="/videogames/valorant/">
+        <h2>Valorant</h2>
+        <p>Agents, maps, esports teams</p>
+      </a></li>
+      <li><a class="cover cover-overwatch" href="/videogames/overwatch/">
+        <h2>Overwatch</h2>
+        <p>Heroes, maps, esports teams</p>
+      </a></li>
+      <li class="cover cover-soon">More games on the way</li>
+    </ul>
+  </main>
+
+  <footer><a href="/">More rankings</a></footer>
+</body>
+</html>

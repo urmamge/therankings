@@ -7,6 +7,10 @@ import VERIFICATION_EMAIL from "../verification-email.txt";
 // Each ranking's rating categories, the name of its second field (the takeaway's location, a
 // racquet's model) and any info tags with their allowed values. A new ranking needs an entry here
 // and a folder in public/.
+const GAME_PICKS = { categories: ["fun", "strength", "skill", "design"], noBrand: true };
+const GAME_MAPS = { categories: ["fun", "balance", "layout", "looks"], noBrand: true };
+const GAME_TEAMS = { categories: ["skill", "entertainment", "consistency", "fanbase"], noBrand: true };
+
 const RANKINGS = {
   takeaway: { categories: ["food", "drive", "sitin", "app"], name: "location", example: "McDonald's" },
   "badminton-shuttles": {
@@ -23,6 +27,13 @@ const RANKINGS = {
   },
   "badminton-shoes": { categories: ["comfort", "grip", "support", "durability"], name: "model", example: "Yonex" },
   "badminton-grips": { categories: ["tack", "comfort", "sweat", "durability"], name: "model", example: "Yonex" },
+  // Video game rankings have just a name, no brand.
+  "valorant-agents": { ...GAME_PICKS, name: "agent", tags: { role: ["Duelist", "Initiator", "Controller", "Sentinel"] } },
+  "valorant-maps": { ...GAME_MAPS, name: "map" },
+  "valorant-teams": { ...GAME_TEAMS, name: "team", tags: { region: ["Americas", "EMEA", "Pacific", "China"] } },
+  "overwatch-heroes": { ...GAME_PICKS, name: "hero", tags: { role: ["Tank", "Damage", "Support"] } },
+  "overwatch-maps": { ...GAME_MAPS, name: "map", tags: { mode: ["Control", "Escort", "Hybrid", "Push", "Flashpoint", "Clash"] } },
+  "overwatch-teams": { ...GAME_TEAMS, name: "team", tags: { region: ["North America", "EMEA", "Korea", "Japan", "Pacific", "China"] } },
 };
 const WEIGHTS = [0.5, 1, 2, 3];
 
@@ -72,6 +83,8 @@ async function route(req, env) {
 
   if (path === "/api/photos" && method === "POST") return uploadPhoto(req, env);
   if (path === "/api/badminton/bag" && method === "GET") return badmintonBag(env);
+  m = path.match(/^\/api\/catalog\/([a-z-]+)$/);
+  if (m && CATALOGS[m[1]] && method === "GET") return catalog(env, m[1]);
 
   m = path.match(/^\/api\/([a-z-]+)\/entries(?:\/([a-z0-9-]+))?(\/history)?$/);
   if (m && RANKINGS[m[1]]) {
@@ -148,9 +161,9 @@ function overallOf(ratings) {
 function cleanEntry(body, ranking) {
   const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
   const config = RANKINGS[ranking];
-  const brand = text(body.brand, 60);
+  const brand = config.noBrand ? "" : text(body.brand, 60);
   const location = text(body.location, 80);
-  if (!brand) throw new HttpError(400, `Add the brand, like ${config.example}.`);
+  if (!brand && !config.noBrand) throw new HttpError(400, `Add the brand, like ${config.example}.`);
   if (!location) throw new HttpError(400, `Add the ${config.name}.`);
 
   const ratings = {};
@@ -200,7 +213,7 @@ async function saveEntry(req, env, ranking, id) {
     if (s.role !== "owner") data.inBag = !!existing.in_bag;
   } else {
     // Readable ids for share links: mcdonalds-botanic-avenue, then -2, -3 for repeats.
-    const base = slugify(`${data.brand} ${data.location}`);
+    const base = slugify(`${data.brand} ${data.location}`.trim());
     id = base;
     for (let n = 2; await env.DB.prepare("SELECT 1 FROM entries WHERE id = ?").bind(id).first(); n++) id = `${base}-${n}`;
   }
@@ -238,6 +251,56 @@ function historyRow(env, ranking, entry, action, at, editor) {
   const { edits, ...snapshot } = entry;
   return env.DB.prepare("INSERT INTO entry_history (entry_id, ranking, action, snapshot, changed_at, editor) VALUES (?, ?, ?, ?, ?, ?)")
     .bind(entry.id, ranking, action, JSON.stringify(snapshot), at, editor);
+}
+
+// ---------- game catalogs ----------
+
+// Every current agent, hero and map, from free fan-run game data sites, so the editor can suggest
+// names and cards can show official art. Each list is fetched at most once a day and kept in KV;
+// if a site is down, the last saved copy is used. Each item is { name, tag, image }.
+const OW_MODES = { control: "Control", escort: "Escort", hybrid: "Hybrid", push: "Push", flashpoint: "Flashpoint", clash: "Clash" };
+const CATALOGS = {
+  "valorant-agents": {
+    url: "https://valorant-api.com/v1/agents?isPlayableCharacter=true",
+    parse: (d) => d.data.map((a) => ({ name: a.displayName, tag: a.role?.displayName, image: a.fullPortrait || a.displayIcon })),
+  },
+  "valorant-maps": {
+    url: "https://valorant-api.com/v1/maps",
+    // Only the competitive bomb-site maps; the rest (deathmatch, skirmish, the range) can be typed in.
+    parse: (d) => d.data.filter((m) => m.tacticalDescription).map((m) => ({ name: m.displayName, image: m.splash })),
+  },
+  "overwatch-heroes": {
+    url: "https://overfast-api.tekrop.fr/heroes",
+    parse: (d) => d.map((h) => ({ name: h.name, tag: h.role[0].toUpperCase() + h.role.slice(1), image: h.portrait })),
+  },
+  "overwatch-maps": {
+    url: "https://overfast-api.tekrop.fr/maps",
+    // Only maps in the six competitive modes.
+    parse: (d) => d.flatMap((m) => {
+      const mode = m.gamemodes.find((g) => OW_MODES[g]);
+      return mode ? [{ name: m.name, tag: OW_MODES[mode], image: m.screenshot }] : [];
+    }),
+  },
+};
+const CATALOG_TTL = 24 * 60 * 60 * 1000;
+
+async function catalog(env, key) {
+  const kvKey = `catalog:${key}`; // shares the photo KV namespace; photo keys never start with "catalog:"
+  const saved = await env.PHOTOS.get(kvKey, "json");
+  if (saved && Date.now() - saved.fetchedAt < CATALOG_TTL) return json({ items: saved.items }, 200, { "cache-control": "public, max-age=3600" });
+  try {
+    const res = await fetch(CATALOGS[key].url, { headers: { "user-agent": "rankings.matthewhearst.com" } });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const seen = new Set();
+    const items = CATALOGS[key].parse(await res.json())
+      .filter((i) => i.name && !seen.has(i.name.toLowerCase()) && seen.add(i.name.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    await env.PHOTOS.put(kvKey, JSON.stringify({ fetchedAt: Date.now(), items }));
+    return json({ items }, 200, { "cache-control": "public, max-age=3600" });
+  } catch (err) {
+    console.error(`Catalog ${key} failed:`, err);
+    return json({ items: saved?.items || [] });
+  }
 }
 
 // ---------- photos ----------

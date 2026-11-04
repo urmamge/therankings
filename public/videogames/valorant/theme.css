@@ -1,0 +1,98 @@
+/* Valorant: tactical. Dark navy, off-white, red; sharp corners with clipped edges, tall condensed
+   capitals, and a red slash across the header. */
+
+:root {
+  --primary: #0F1923;
+  --primary-deep: #1B2733;
+  --on-primary: #ECE8E1;
+  --page: #ECE8E1;
+  --ink: #0F1923;
+  --highlight: #FF4655;
+  --board: #0F1923;
+  --muted: #5B6570;
+  --r-lg: 0;
+  --r-md: 0;
+  --r-sm: 0;
+  --pop: 6px 6px 0 var(--ink);
+  --head: "Anton", "Impact", sans-serif;
+  --text: "Rajdhani", system-ui, sans-serif;
+  /* Card colours by role or region, in the order they're listed. */
+  --tag-0: #FF4655;
+  --tag-1: #1F8A84;
+  --tag-2: #5B3FA8;
+  --tag-3: #C8963E;
+  --tag-3-ink: #0F1923;
+}
+
+body { font-weight: 500; font-size: 1.08rem; }
+
+.sign, .game-tile h2, .tile h2, .editor h2, .detail h2, .rk-panel h2, .empty h2, .views [role="tab"], .sc-head, .sc-total span, .live-total span, .editor-sub, .card h3 {
+  font-style: normal;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.sign { font-size: clamp(3.6rem, 13vw, 9rem); text-shadow: none; }
+.sign::after { content: ""; display: block; width: 1.1em; height: 0.08em; margin-top: 0.12em; background: var(--highlight); }
+
+/* The red slash across the right of the header. */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: 8%;
+  width: 180px;
+  height: 140%;
+  background: var(--highlight);
+  transform: skewX(-20deg);
+  opacity: 0.9;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: calc(8% + 210px);
+  width: 34px;
+  height: 140%;
+  background: var(--on-primary);
+  transform: skewX(-20deg);
+  opacity: 0.12;
+}
+.champ { border-color: var(--on-primary); box-shadow: 6px 6px 0 var(--highlight); }
+@media (max-width: 860px) {
+  .hero::before { right: -70px; width: 110px; }
+  .hero::after { display: none; }
+}
+.sc-head, .sc-total { border-radius: 0; }
+
+/* Strip under the header: red with dark hazard slashes. */
+.deco-band {
+  height: 18px;
+  background: repeating-linear-gradient(-60deg, var(--highlight) 0 22px, var(--ink) 22px 30px);
+  border-bottom: 0;
+}
+
+/* Clipped corners, Valorant style. */
+.card, .game-tile {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+  box-shadow: none;
+}
+/* A clipped element can't show its own shadow, so the shadow goes on the parent. */
+.grid, .game-tiles li { filter: drop-shadow(6px 6px 0 var(--ink)); }
+.btn, .rk-btn { text-transform: uppercase; font-family: var(--head); font-weight: 400; letter-spacing: 0.04em; }
+.btn-add, .rk-primary { background: var(--highlight); color: #FFFFFF; }
+.views [aria-selected="true"] { background: var(--ink); color: var(--highlight); }
+.chip[aria-pressed="true"] span { color: var(--highlight); }
+.score .digit { color: var(--highlight); text-shadow: 0 0 12px rgba(255, 70, 85, 0.5); background: #1B2733; }
+.champ-score { color: var(--highlight); text-shadow: 0 0 16px rgba(255, 70, 85, 0.45); }
+.scoreboard { border-color: #1B2733; }
+.scoreboard .first a { background: var(--highlight); }
+.scoreboard .first .rank, .scoreboard .first .score .digit { color: #FFFFFF; text-shadow: none; }
+.scoreboard .first .score .digit { background: rgba(15, 25, 35, 0.35); }
+.scoreboard .first .score .dot { color: #FFFFFF; }
+.sc-total { background: var(--highlight); color: #FFFFFF; }
+.game-tile .tile-facts strong, .tile-facts strong { color: var(--highlight); }
+.tier-good { background: #F2C94C; }
+
+/* Agent art has lots of empty space around the character, so cards zoom in on them. */
+.card-top .art-portrait { transform: scale(1.8); transform-origin: 50% 20%; }
