@@ -1,0 +1,60 @@
+# Deploys to Cloudflare on every push to main (rankings go live by merging their branch into main).
+# Needs repo secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and VERIFICATION_EMAIL
+# (the contents of the gitignored verification-email.txt, which the Worker imports).
+# If there are D1 migrations to apply, the database is exported first and kept as a
+# workflow artifact for 14 days, then the migrations run before the deploy.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx -y wrangler@3.114.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Write the verification email draft
+        env:
+          VERIFICATION_EMAIL: ${{ secrets.VERIFICATION_EMAIL }}
+        run: |
+          if [ -z "$VERIFICATION_EMAIL" ]; then echo "VERIFICATION_EMAIL secret is missing"; exit 1; fi
+          printf '%s' "$VERIFICATION_EMAIL" > verification-email.txt
+
+      - name: Check for pending migrations
+        id: pending
+        run: |
+          out=$($WRANGLER d1 migrations list therankings --remote 2>&1) || { echo "$out"; exit 1; }
+          echo "$out"
+          if echo "$out" | grep -q "No migrations to apply"; then echo "any=false" >> "$GITHUB_OUTPUT"; else echo "any=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Back up the database
+        if: steps.pending.outputs.any == 'true'
+        run: $WRANGLER d1 export therankings --remote --output "backup-$(date -u +%Y%m%d-%H%M%S).sql"
+
+      - name: Keep the backup
+        if: steps.pending.outputs.any == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: d1-backup
+          path: backup-*.sql
+          retention-days: 14
+
+      - name: Apply migrations
+        if: steps.pending.outputs.any == 'true'
+        run: $WRANGLER d1 migrations apply DB --remote
+
+      - run: $WRANGLER deploy
